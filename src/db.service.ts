@@ -8,6 +8,7 @@ export interface UserWithGamebooks extends User {
 // Use JSON file for storage
 export type DbData = {
   users: UserWithGamebooks[];
+  gamebooks: Gamebook[];
 };
 
 @Injectable()
@@ -18,7 +19,11 @@ export class DBService {
     return this.db.data.users;
   }
 
+  get gamebooks() {
+    return this.db.data.gamebooks;
+  }
+
   constructor() {
-    this.db = { data: { users: [] } };
+    this.db = { data: { users: [], gamebooks: [] } };
   }
 }
