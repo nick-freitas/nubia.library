@@ -16,12 +16,12 @@ import { DBService, UserWithGamebooks } from './db.service';
 
 @Injectable()
 export class AppService {
-  constructor(private readonly DBService: DBService) {}
+  constructor(private readonly dBService: DBService) {}
 
   async userCreatedHandler(
     data: UserCreatedEvent['data'],
   ): Promise<UserWithGamebooks> {
-    const { fullName, id, email, version } = data;
+    const { fullName, id, email, version, roles } = data;
 
     if (!email) {
       throw new Error('Missing Email');
@@ -39,9 +39,10 @@ export class AppService {
       fullName: fullName,
       version: version,
       library: [],
+      roles: roles,
     };
 
-    this.DBService.users.push({ ...user });
+    this.dBService.users.push({ ...user });
 
     return user;
   }
@@ -55,13 +56,13 @@ export class AppService {
       throw new Error('Missing Id');
     }
 
-    const index = this.DBService.users.findIndex(
+    const index = this.dBService.users.findIndex(
       (user) => user.id === id && user.active === true,
     );
     if (index === -1)
       throw new BadRequestException('Bad Id in User Update Request');
 
-    const user = { ...this.DBService.users[index] };
+    const user = { ...this.dBService.users[index] };
     if (user.version !== version - 1)
       throw new OutOfOrderEventException(
         UserEventType.USER_UPDATED,
@@ -71,7 +72,7 @@ export class AppService {
 
     user.fullName = fullName;
     user.version = version;
-    this.DBService.users[index] = { ...user };
+    this.dBService.users[index] = { ...user };
 
     return user;
   }
@@ -98,7 +99,7 @@ export class AppService {
       version,
     };
 
-    this.DBService.gamebooks.push({ ...gamebook });
+    this.dBService.gamebooks.push({ ...gamebook });
 
     return gamebook;
   }
@@ -115,13 +116,13 @@ export class AppService {
       throw new Error('Missing Version');
     }
 
-    const index = this.DBService.gamebooks.findIndex(
+    const index = this.dBService.gamebooks.findIndex(
       (gamebook) => gamebook.id === id,
     );
     if (index === -1)
       throw new BadRequestException('Bad Id in Gamebook Update Request');
 
-    const gamebook = { ...this.DBService.gamebooks[index] };
+    const gamebook = { ...this.dBService.gamebooks[index] };
     if (gamebook.version !== version - 1)
       throw new OutOfOrderEventException(
         GamebookEventType.GAMEBOOK_UPDATED,
@@ -129,7 +130,7 @@ export class AppService {
         version,
       );
 
-    this.DBService.gamebooks[index] = {
+    this.dBService.gamebooks[index] = {
       ...gamebook,
       ...data,
       version,
@@ -144,7 +145,7 @@ export class AppService {
     if (!userId)
       throw new BadRequestException('No UserId in GetUserLibrary Request');
 
-    const userLibrary = this.DBService.users.find((u) => u.id === userId);
+    const userLibrary = this.dBService.users.find((u) => u.id === userId);
     if (!userLibrary)
       throw new BadRequestException('Could not find a library for that user');
 
@@ -159,12 +160,12 @@ export class AppService {
     if (!gamebookId)
       throw new BadRequestException('No GamebookId in GetUserLibrary Request');
 
-    const userLibraryIndex = this.DBService.users.findIndex(
+    const userLibraryIndex = this.dBService.users.findIndex(
       (u) => u.id === userId,
     );
     if (userLibraryIndex === -1)
       throw new BadRequestException('Could not find a library for that user');
-    const userLibrary = this.DBService.users[userLibraryIndex];
+    const userLibrary = this.dBService.users[userLibraryIndex];
 
     const existingGamebook = userLibrary.library.find(
       (gb) => gb.id === gamebookId,
@@ -175,11 +176,11 @@ export class AppService {
     // There is nothing more we can do so just return
     if (existingGamebook) return;
 
-    const gamebook = this.DBService.gamebooks.find(
+    const gamebook = this.dBService.gamebooks.find(
       (gb) => gb.id === gamebookId,
     );
     userLibrary.library.push(gamebook);
-    this.DBService.users[userLibraryIndex] = { ...userLibrary };
+    this.dBService.users[userLibraryIndex] = { ...userLibrary };
 
     return userLibrary.library;
   }
@@ -196,12 +197,12 @@ export class AppService {
         'No GamebookId in RemoveBookFromLibrary Request',
       );
 
-    const userLibraryIndex = this.DBService.users.findIndex(
+    const userLibraryIndex = this.dBService.users.findIndex(
       (u) => u.id === userId,
     );
     if (userLibraryIndex === -1)
       throw new BadRequestException('Could not find a library for that user');
-    const userLibrary = this.DBService.users[userLibraryIndex];
+    const userLibrary = this.dBService.users[userLibraryIndex];
 
     const existingGamebookIndex = userLibrary.library.findIndex(
       (gb) => gb.id === gamebookId,
@@ -213,7 +214,7 @@ export class AppService {
     if (existingGamebookIndex === -1) return;
 
     userLibrary.library.splice(existingGamebookIndex, 1);
-    this.DBService.users[userLibraryIndex] = {
+    this.dBService.users[userLibraryIndex] = {
       ...userLibrary,
       library: [...userLibrary.library],
     };
